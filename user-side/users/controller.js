@@ -2,7 +2,7 @@ const bcrypt = require("bcrypt");
 const { createToken, maxAge } = require("../../utils/authN");
 const User = require("./schema"); // Adjust the path to your schema file
 const Bank = require("../../admin/bank/schema");
-const { sendSMS } = require("../../utils/sendSMS.JS");
+const { sendSMS } = require("../../utils/sendSMS.js");
 
 const getUserLogin = (req, res) => {
   res.send("Login get page");
