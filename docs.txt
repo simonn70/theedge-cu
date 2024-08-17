@@ -1,0 +1,22 @@
+this app is for withdrawing and depositing money into a bank account
+the two user involved are the bank and the bank member
+THE USER EXPERIENCE
+when a user logs in, he would log in with his account number and a password
+if the credentials are valid, he is then logged into to the system
+once logged in, he has access to all the accounts that he has with that bank
+he may chose to withdraw cash or deposit cash
+if he decides to deposit cash, the Paystack api is used as a third party library to facilitate the transaction
+a record of the transaction is kept in our database for future reference purposes
+if he decides to withdraw cash, he is to select which of the accounts he is withdrawing from and provide the amount he's going to withdraw
+a request is then sent to the admin side which is the bank interface which would then be approved or rejected
+this transaction is also recorded in the database for future reference purposes
+a record of all transactions is kept for the user so he can get access to them at anytime
+THE ADMIN EXPERIENCE
+the admin panel would belong to the banks and they would have login details for that
+when the bank logs in, they can see a dashboard which would contain their members and their active members
+it would also show the financial transactions, their numbers and other details
+there would be the option to add new users whether individually or in bulk
+there would also be the option to list all the members of the bank
+the admin, which is the bank, would be able to update member details too
+the admin can also reject or approve pending withdrawals which are made by the user
+the admin also has access to all the records of the transactions that go on in the bank

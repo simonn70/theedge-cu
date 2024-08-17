@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: server-chief-dev
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    plan: free
+    autoDeploy: true
+    autoDeployBranches:
+      - main
+    autoDeployPullRequests: true
+    git:
+      branch: main
+      repo: github.com:Vinc5764/bank-server
+      pullRequests: true
