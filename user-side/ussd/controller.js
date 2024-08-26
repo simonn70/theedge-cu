@@ -26,9 +26,9 @@ const NETWORKS = {
 };
 
 const ACCOUNT_TYPE_MAP = {
-  "Citti Shares": "shares",
-  "Citti Savings": "savings",
-  "Citti Investment": "investment",
+  "Kan Shares": "shares",
+  "Kan Savings": "savings",
+  // "Citti Investment": "investment",
 };
 
 async function chargeWithPaystack(phone, accountNumber, amount, network) {
@@ -140,7 +140,7 @@ async function ussdHandler(req, res) {
       (userInput === "1" || userInput === "2")
     ) {
       session.selectedAccount =
-        userInput === "1" ? "Citti Shares" : "Citti Savings";
+        userInput === "1" ? "Kan Shares" : "Kan Savings";
       const accountType = ACCOUNT_TYPE_MAP[session.selectedAccount];
       try {
         const balance = await checkBalance(
@@ -160,14 +160,14 @@ async function ussdHandler(req, res) {
       session.selectedAction = userInput;
       message = `Which account do you want to ${
         userInput === "1" ? "deposit into" : "withdraw from"
-      }?\n1. Citti Savings\n2. Citti Investment`;
+      }?\n1. Kan Savings\n2. Kan Shares`;
       continueSession = true;
     } else if (
       !session.selectedAccount &&
       (userInput === "1" || userInput === "2")
     ) {
       session.selectedAccount =
-        userInput === "1" ? "Citti Savings" : "Citti Investment";
+        userInput === "1" ? "Kan Savings" : "Kan Investment";
       message = `Enter Amount for ${
         session.selectedAction === "1" ? "Deposit" : "Withdrawal"
       }:`;
