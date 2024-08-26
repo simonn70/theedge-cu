@@ -3,7 +3,7 @@ const { createToken, maxAge } = require("../../utils/authN");
 const User = require("./schema"); // Adjust the path to your schema file
 const Bank = require("../../admin/bank/schema");
 const { sendSMS } = require("../../utils/sendSMS.js");
-
+const Deposit = require("../deposit/schema");
 const getUserLogin = (req, res) => {
   res.send("Login get page");
 };
@@ -61,10 +61,14 @@ const postUserSignUp = async (req, res) => {
     mobileNumber,
     selectedBank,
     accountNumber,
-    balance,
+    savingsBalance,
+    sharesBalance,
   } = req.body;
+
   try {
-    const existingUser = await User.findOne({ email } || { accountNumber });
+    const existingUser = await User.findOne({
+      $or: [{ email }, { accountNumber }],
+    });
     if (existingUser) {
       return res.status(400).json({ message: "This user already exists." });
     }
@@ -78,16 +82,38 @@ const postUserSignUp = async (req, res) => {
       selectedBank,
       accountNumber,
       mobileNumber,
-      balance,
+      savingsBalance,
+      sharesBalance,
       userType: "newMember",
     });
 
-    // generate verification code for verification
-    const message = `Hello ${email},\n\nYour account with acc number: ${accountNumber} has been created by Citti Credit Union Bank. Your credentials are as follows:\n\nEmail: ${email}\nPassword: ${password}\n\nPlease change your password after your first login\n .\n\nRegards,\nTeam`;
+    const url = "https://www.mycitticreditonline.com";
+    // Generate the verification message
+    const message = `Hello ${email},\n\nYour account with account number: ${accountNumber} has been created by Citti Credit Union Bank. Your credentials are as follows:\n\nEmail: ${email}\nPassword: ${password}\n\nPlease change your password after your first login.\nclick here ${url}\nRegards,\nTeam`;
 
     if (newUser) {
-      //trigger a mail or notification with a good message
+      // Send SMS notification
       await sendSMS(mobileNumber, message);
+
+      // Create a deposit record if savingsBalance is provided
+      if (savingsBalance) {
+        await Deposit.create({
+          email,
+          accountNumber,
+          amount: savingsBalance,
+          account: "savings",
+        });
+      }
+
+      // Create a deposit record if sharesBalance is provided
+      if (sharesBalance) {
+        await Deposit.create({
+          email,
+          accountNumber,
+          amount: sharesBalance,
+          account: "shares",
+        });
+      }
 
       return res.status(201).json(newUser);
     }

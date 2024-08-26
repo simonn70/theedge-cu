@@ -26,7 +26,12 @@ const userSchema = new schema({
     type: String,
     required: [false, "please enter your account number"],
   },
-  balance: {
+  savingsBalance: {
+    type: Number,
+    default: 0, // Set default value of 0 for balance
+    required: [false, "please enter your balance"],
+  },
+  sharesBalance: {
     type: Number,
     default: 0, // Set default value of 0 for balance
     required: [false, "please enter your balance"],

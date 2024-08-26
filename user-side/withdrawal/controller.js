@@ -1,6 +1,7 @@
 const axios = require("axios");
 const Withdrawal = require("./schema");
 const User = require("../users/schema");
+const { sendSMS } = require("../../utils/sendSMS");
 const paystack = require("paystack-api")(
   "Bearer sk_test_3b0262988db07d1c10731c8e353e1ad5b99d29ed"
 ); // Ensure to use your Paystack secret key
@@ -35,6 +36,57 @@ const makeWithdrawal = async (req, res) => {
   }
 };
 
+const manualWithdrawal = async (req, res) => {
+  const { amount, accountNumber, purpose, account } = req.body;
+
+  try {
+    // Find the user by account number
+    const user = await User.findOne({ accountNumber });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Ensure that the amount is treated as a number
+    const withdrawalAmount = parseFloat(amount);
+
+    // Update the user's balance based on the account type
+    if (account === "shares") {
+      user.sharesBalance -= withdrawalAmount;
+    } else if (account === "savings") {
+      user.savingsBalance -= withdrawalAmount;
+    } else {
+      return res.status(400).json({ message: "Invalid account type" });
+    }
+
+    // Save the updated user
+    await user.save();
+
+    // Create a new withdrawal record
+    const newWithdrawal = await Withdrawal.create({
+      account,
+      amount: withdrawalAmount, // Ensure the correct amount is stored
+      purpose,
+      accountNumber,
+     
+      status: "success",
+    });
+    const mobileNumber = user.mobileNumber;
+    const url = "https://www.mycitticreditonline.com";
+    // Generate the verification message
+    const message = `Hello ${user.email},\n\nYour account has been debited with GHS  ${withdrawalAmount}   by Citti Credit Union Bank. click here to confirm ${url}\nRegards,\nTeam`;
+    await sendSMS(mobileNumber, message);
+
+    res.status(200).json({
+      newWithdrawal,
+      message: "Withdrawal processed successfully",
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal server error." });
+  }
+};
+
 const createRecipientAndTransfer = async (req, res) => {
   const { accountNumber, bank_code, amount, type, currency, reason } = req.body;
   try {
@@ -54,7 +106,8 @@ const createRecipientAndTransfer = async (req, res) => {
         // Use the appropriate currency code, e.g., "GHS" for Ghana
         bank_code: "MTN", // Set the mobile money provider's bank code, e.g., "MTN" for MTN Mobile Money
         // Use the mobile money number here
-        account_number: user.mobileNumber,
+        currency: "GHS",
+        account_number: "0554674801",
       },
       {
         headers: {
@@ -63,6 +116,8 @@ const createRecipientAndTransfer = async (req, res) => {
         },
       }
     );
+
+    console.log(recipientResponse);
 
     const recipientCode = recipientResponse.data.data.recipient_code;
 
@@ -77,7 +132,7 @@ const createRecipientAndTransfer = async (req, res) => {
       },
       {
         headers: {
-          Authorization: `Bearer ${process.env.PAYSTACK_KEY}`,
+          Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
           "Content-Type": "application/json",
         },
       }
@@ -90,7 +145,7 @@ const createRecipientAndTransfer = async (req, res) => {
       `https://api.paystack.co/transfer/${transferId}`,
       {
         headers: {
-          Authorization: `Bearer ${process.env.PAYSTACK_KEY}`,
+          Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
           "Content-Type": "application/json",
         },
       }
@@ -133,7 +188,7 @@ const rejectWithdrawal = async (req, res) => {
   try {
     // Find the withdrawal by ID and update its status to "rejected"
     const updatedWithdrawal = await Withdrawal.findByIdAndUpdate(
-    id,
+      id,
       { status: "rejected" },
       { new: true }
     );
@@ -145,7 +200,7 @@ const rejectWithdrawal = async (req, res) => {
       });
     }
 
-    res.status(200).json({ 
+    res.status(200).json({
       status: "success",
       message: "Withdrawal rejected successfully",
       withdrawal: updatedWithdrawal,
@@ -160,6 +215,7 @@ const rejectWithdrawal = async (req, res) => {
 module.exports = {
   getWithdrawalPage,
   makeWithdrawal,
+  manualWithdrawal,
   rejectWithdrawal,
   createRecipientAndTransfer,
 };

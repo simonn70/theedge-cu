@@ -6,17 +6,28 @@ const bcrypt = require("bcrypt");
 
 const getHomepage = async (req, res) => {
   try {
+    // Count the number of users
     const users = await user.countDocuments();
-    const deposits = await deposit.countDocuments();
-    const withdrawals = await withdrawal.countDocuments();
+
+    // Count the number of successful deposits and withdrawals
+    const deposits = await deposit.countDocuments({ status: "success" });
+    const withdrawals = await withdrawal.countDocuments({ status: "success" });
+
+    // Calculate the total amount of successful deposits and withdrawals
     let totalDeposits = 0;
     let totalWithdrawals = 0;
-    for (const eachdeposit of await deposit.find()) {
-      totalDeposits += eachdeposit.amount;
+
+    const successfulDeposits = await deposit.find({ status: "success" });
+    for (const eachDeposit of successfulDeposits) {
+      totalDeposits += eachDeposit.amount;
     }
-    for (const eachwithdrawal of await withdrawal.find()) {
-      totalWithdrawals += eachwithdrawal.amount;
+
+    const successfulWithdrawals = await withdrawal.find({ status: "success" });
+    for (const eachWithdrawal of successfulWithdrawals) {
+      totalWithdrawals += eachWithdrawal.amount;
     }
+
+    // Send the response with the calculated values
     res.status(200).send({
       users,
       deposits,
@@ -25,7 +36,8 @@ const getHomepage = async (req, res) => {
       totalWithdrawals,
     });
   } catch (err) {
-    throw err;
+    console.error("Error fetching homepage data:", err);
+    res.status(500).send({ error: "Failed to fetch homepage data" });
   }
 };
 
@@ -95,7 +107,6 @@ const insertMembers = async (req, res) => {
   }
 };
 
-
 const updateMember = async (req, res) => {
   const { id, email } = req.body;
   try {
@@ -130,7 +141,6 @@ const getPendingWithdrawals = async (req, res) => {
     res.status(500).send("Internal Server Error");
   }
 };
-
 
 const updateWithdrawal = async (req, res) => {
   const { transactionid } = req.body;
@@ -168,89 +178,156 @@ const getReports = async (req, res) => {
   }
 };
 
-const getUserReports = async (req, res) => {
-  try {
-    const accountNumber = req.params.accountNumber;
-
-    // Fetch withdrawals and deposits
-    const withdrawals = await withdrawal.find({ accountNumber });
-    const deposits = await deposit.find({ accountNumber });
-
-    // Merge transactions
-    const transactions = [...withdrawals, ...deposits];
-
-    // Group and calculate totals
-    const totals = transactions.reduce((acc, transaction) => {
-      const accountType = transaction.accountType; // Assuming accountType is a field in your transactions
-
-      if (!acc[accountType]) {
-        acc[accountType] = { total: 0, transactions: [] };
-      }
-
-      acc[accountType].total += transaction.amount; // Assuming amount is a field in your transactions
-      acc[accountType].transactions.push(transaction);
-
-      return acc;
-    }, {});
-
-    res.status(200).send(totals);
-  } catch (err) {
-    res.status(500).send({ error: err.message });
-  }
-};
-
 const getCustomerReports = async (req, res) => {
   const { accountNumber } = req.query;
   try {
-    const withdrawals = await withdrawal.find({ accountNumber });
-    const deposits = await deposit.find({ accountNumber });
+    // Fetch all withdrawals and deposits (considering all statuses)
+    const allWithdrawals = await withdrawal.find({ accountNumber });
+    const allDeposits = await deposit.find({ accountNumber });
 
-    // Merge deposits and withdrawals
-    const allTransactions = [...withdrawals, ...deposits];
+    // Fetch only successful withdrawals and deposits for total calculations
+    const successfulWithdrawals = await withdrawal.find({
+      accountNumber,
+      status: "success",
+    });
+    const successfulDeposits = await deposit.find({
+      accountNumber,
+      status: "success",
+    });
 
-    // Group transactions by account number
-    const groupedTransactions = allTransactions.reduce((acc, transaction) => {
+    // Combine all withdrawals and deposits into a single array
+    const allTransactions = [...allWithdrawals, ...allDeposits];
+    const allSuccessfulTransactions = [
+      ...successfulWithdrawals,
+      ...successfulDeposits,
+    ];
+
+    // Sort the combined transactions array by date (whether dateWithdrawn or dateDeposited)
+    const sortedTransactions = allTransactions.sort((a, b) => {
+      const dateA = a.dateWithdrawn || a.dateDeposited;
+      const dateB = b.dateWithdrawn || b.dateDeposited;
+      return new Date(dateA) - new Date(dateB);
+    });
+    const sortedSuccessfulTransactions = allSuccessfulTransactions.sort(
+      (a, b) => {
+        const dateA = a.dateWithdrawn || a.dateDeposited;
+        const dateB = b.dateWithdrawn || b.dateDeposited;
+        return new Date(dateA) - new Date(dateB);
+      }
+    );
+
+    // Group transactions by account number and separate deposits/withdrawals for successful transactions
+    const groupedTransactions = [
+      ...successfulWithdrawals,
+      ...successfulDeposits,
+    ].reduce((acc, transaction) => {
       const { accountNumber, amount, account } = transaction;
+      const isWithdrawal = successfulWithdrawals.some((w) =>
+        w._id.equals(transaction._id)
+      );
 
       if (!acc[account]) {
         acc[account] = {
-          transactions: [],
-          total: 0,
+          totalDeposits: 0,
+          totalWithdrawals: 0,
         };
       }
-      acc[account].transactions.push({
-        amount,
-        account,
-        date: transaction.date,
-        _id: transaction._id,
-      });
 
-      // Update total
-      acc[account].total += amount;
+      // Update total deposits or withdrawals
+      if (isWithdrawal) {
+        acc[account].totalWithdrawals += amount;
+      } else {
+        acc[account].totalDeposits += amount;
+      }
+
       return acc;
     }, {});
 
-    // Transform grouped transactions into separate totals and transactions arrays
+    // Calculate net totals
     const totals = {};
-    const transactions = {};
-
     Object.keys(groupedTransactions).forEach((account) => {
-      const { total, transactions: trans } = groupedTransactions[account];
-
-      // Initialize totals and transactions arrays
-      totals[account] = total;
-      transactions[account] = trans;
+      const { totalDeposits, totalWithdrawals } = groupedTransactions[account];
+      totals[account] = totalDeposits - totalWithdrawals;
     });
 
     res.status(200).send({
       totals,
-      allTransactions,
+      allTransactions: sortedTransactions, // Return sorted transactions
+      groupedTransactions: sortedSuccessfulTransactions,
     });
   } catch (err) {
     console.error("Error fetching reports:", err);
     res.status(500).send({ error: "Internal Server Error" });
   }
 };
+
+// const getCustomerReports = async (req, res) => {
+//   const { accountNumber } = req.query;
+//   try {
+//     const withdrawals = await withdrawal.find({ accountNumber });
+//     const deposits = await deposit.find({ accountNumber });
+
+//     // Merge deposits and withdrawals
+//     const allTransactions = [...withdrawals, ...deposits];
+
+//     // Group transactions by account number and separate deposits/withdrawals
+//     const groupedTransactions = allTransactions.reduce((acc, transaction) => {
+//       const { accountNumber, amount, account } = transaction;
+//       const isWithdrawal = withdrawals.some((w) =>
+//         w._id.equals(transaction._id)
+//       );
+
+//       if (!acc[account]) {
+//         acc[account] = {
+//           transactions: [],
+//           totalDeposits: 0,
+//           totalWithdrawals: 0,
+//         };
+//       }
+
+//       acc[account].transactions.push({
+//         amount,
+//         account,
+//         date: transaction.date,
+//         _id: transaction._id,
+//         type: isWithdrawal ? "withdrawal" : "deposit",
+//       });
+
+//       // Update total deposits or withdrawals
+//       if (isWithdrawal) {
+//         acc[account].totalWithdrawals += amount;
+//       } else {
+//         acc[account].totalDeposits += amount;
+//       }
+
+//       return acc;
+//     }, {});
+
+//     // Transform grouped transactions into separate totals and transactions arrays
+//     const totals = {};
+//     const transactions = {};
+
+//     Object.keys(groupedTransactions).forEach((account) => {
+//       const {
+//         totalDeposits,
+//         totalWithdrawals,
+//         transactions: trans,
+//       } = groupedTransactions[account];
+
+//       // Calculate net total for the account
+//       totals[account] = totalDeposits - totalWithdrawals;
+//       transactions[account] = trans;
+//     });
+
+//     res.status(200).send({
+//       totals,
+//       allTransactions,
+//     });
+//   } catch (err) {
+//     console.error("Error fetching reports:", err);
+//     res.status(500).send({ error: "Internal Server Error" });
+//   }
+// };
 
 module.exports = {
   getHomepage,

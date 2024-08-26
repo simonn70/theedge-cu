@@ -4,15 +4,15 @@ const schema = mongoose.Schema;
 const withdrawalSchema = new schema({
   account: {
     type: String,
-    required: [true, "please select the account you want to withdraw from"],
+    required: [false, "please select the account you want to withdraw from"],
   },
   amount: {
     type: Number,
-    required: [true, "please enter the amount you'd like to withdraw"],
+    required: [false, "please enter the amount you'd like to withdraw"],
   },
   purpose: {
     type: String,
-    required: true,
+    required: false,
     default: `money withdrawal `,
   },
   accountNumber: {
