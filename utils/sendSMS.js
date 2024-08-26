@@ -1,8 +1,8 @@
 const axios = require("axios");
 
 const sendSMS = async (contactNumber, message) => {
-  const apiKey = "2YzcoaBrbkja6tnmfIJciJBgS";
-  const senderId = "CittiCredit";
+  const apiKey = "nHBzjRiacu090IFfVpZdugx1g";
+  const senderId = "Kan Credit";
   const mNotifyUrl = `https://apps.mnotify.net/smsapi?key=${apiKey}&to=${contactNumber}&msg=${encodeURIComponent(
     message
   )}&sender_id=${senderId}`;
