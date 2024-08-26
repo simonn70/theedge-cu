@@ -8,7 +8,7 @@ const getDepositPage = (req, res) => {
   res.send("This is the deposit page");
 };
 const BASE_URL = "http://localhost:3000";
-const PAYSTACK_SECRET_KEY = "pk_live_dc7a798445c749e61e737d846b80ad9cad41c4ef";
+const PAYSTACK_SECRET_KEY = "sk_live_b656166f9c8b4216425d78a0ef4c49a390d84cbd";
 
 const makeDeposit = async (req, res) => {
   const { userid, email, amount, account, accountNumber } = req.body;

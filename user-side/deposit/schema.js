@@ -17,7 +17,7 @@ const depositSchema = new schema({
   status: {
     type: String,
     required: [false, "the status of your transaction"],
-    default: "pending",
+    default: "success",
   },
   amount: {
     type: Number,
