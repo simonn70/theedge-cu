@@ -109,9 +109,9 @@ const manualDeposit = async (req, res) => {
     });
 
     const mobileNumber = user.mobileNumber;
-    const url = "https://www.mycitticreditonline.com";
+    const url = "https://kan-credit.vercel.app/sign-in";
     // Generate the verification message
-    const message = `Hello ${email},\n\nYour account has been credited with GHS  ${amount}   by Citti Credit Union Bank. click here to confirm ${url}\nRegards,\nTeam`;
+    const message = `Hello ${email},\n\nYour account has been credited with GHS  ${amount}   by Kan Credit Union Bank. click here to confirm ${url}\nRegards,\nTeam`;
     await sendSMS(mobileNumber, message);
 
     res.json({
