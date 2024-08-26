@@ -9,7 +9,7 @@ const paystack = require("paystack-api")(
 const getWithdrawalPage = (req, res) => {
   res.send("This is the withdrawal page");
 };
-const PAYSTACK_SECRET_KEY = "sk_test_fcc05416469bb4e211d4f89d6870b5328dc847dc";
+const PAYSTACK_SECRET_KEY = "pk_live_dc7a798445c749e61e737d846b80ad9cad41c4ef";
 
 const makeWithdrawal = async (req, res) => {
   const { amount, accountNumber, purpose, account } = req.body;
