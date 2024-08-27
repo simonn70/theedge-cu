@@ -126,7 +126,7 @@ const createRecipientAndTransfer = async (req, res) => {
       "https://api.paystack.co/transfer",
       {
         source: "balance",
-        amount,
+        amount:amount*100,
         recipient: recipientCode,
         reason,
       },

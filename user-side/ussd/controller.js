@@ -39,11 +39,11 @@ async function chargeWithPaystack(phone, accountNumber, amount, network) {
     const response = await axios.post(
       "https://api.paystack.co/charge",
       {
-        amount: value,
+        amount: value*100,
         email: `simonadjei70@gmail.com`,
         currency: "GHS",
         mobile_money: {
-          phone: "0551234987",
+          phone: phone,
           provider: "mtn",
         },
       },
@@ -167,7 +167,7 @@ async function ussdHandler(req, res) {
       (userInput === "1" || userInput === "2")
     ) {
       session.selectedAccount =
-        userInput === "1" ? "Kan Savings" : "Kan Investment";
+        userInput === "1" ? "Kan Savings" : "Kan Shares";
       message = `Enter Amount for ${
         session.selectedAction === "1" ? "Deposit" : "Withdrawal"
       }:`;
@@ -204,14 +204,63 @@ async function ussdHandler(req, res) {
         }
       }
     } else if (session.selectedAction === "1") {
-      if (!isNaN(userInput) && Number(userInput) > 0) {
+      if (!session.amount) {
         session.amount = Number(userInput);
+        if (isNaN(session.amount) || session.amount <= 0) {
+          message = "Invalid input. Please enter a valid amount.";
+          continueSession = true;
+        } else {
+          try {
+            const chargeResult = await chargeWithPaystack(
+              msisdn,
+              accountNumber,
+              session.amount,
+              network
+            );
+
+            // Handle OTP scenario
+            if (chargeResult.status === "send_otp") {
+              session.awaitingOtp = true;
+              session.transactionReference = chargeResult.reference;
+              message = chargeResult.display_text;
+              continueSession = true;
+            } else {
+              // Save deposit to DB
+              const newDeposit = new Deposit({
+                accountNumber: accountNumber,
+                account: ACCOUNT_TYPE_MAP[session.selectedAccount],
+                amount: session.amount,
+                status:
+                  chargeResult.status === "success" ? "success" : "rejected",
+              });
+              await newDeposit.save();
+
+              message =
+                chargeResult.status === "success"
+                  ? `Your deposit of GHS ${session.amount} was successful.`
+                  : "Deposit failed. Please try again.";
+              delete sessionData[sessionID];
+            }
+          } catch (error) {
+            message = "There was an issue with your deposit. Please try again.";
+            continueSession = true;
+          }
+        }
+      } else if (session.awaitingOtp) {
+        const otp = userInput;
         try {
-          const chargeResult = await chargeWithPaystack(
-            msisdn,
-            accountNumber,
-            session.amount,
-            network
+          const otpResponse = await axios.post(
+            "https://api.paystack.co/charge/submit_otp",
+            {
+              otp: otp,
+              reference: session.transactionReference,
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
+                "Content-Type": "application/json",
+              },
+            }
           );
 
           // Save deposit to DB
@@ -219,20 +268,20 @@ async function ussdHandler(req, res) {
             accountNumber: accountNumber,
             account: ACCOUNT_TYPE_MAP[session.selectedAccount],
             amount: session.amount,
-            status: chargeResult.status === "success" ? "success" : "rejected",
+            status:
+              otpResponse.data.status === "success" ? "success" : "rejected",
           });
           await newDeposit.save();
 
           message =
-            chargeResult.status === "success"
+            otpResponse.data.status === "success"
               ? `Your deposit of GHS ${session.amount} was successful.`
               : "Deposit failed. Please try again.";
+          delete sessionData[sessionID];
         } catch (error) {
-          message = "There was an issue with your deposit. Please try again.";
+          message = "There was an issue processing your OTP. Please try again.";
+          continueSession = true;
         }
-      } else {
-        message = "Invalid input. Please enter a valid amount.";
-        continueSession = true;
       }
     } else {
       message = "Invalid input. Please try again.";
@@ -248,6 +297,7 @@ async function ussdHandler(req, res) {
     continueSession,
   });
 }
+
 
 module.exports = {
   ussdHandler,
