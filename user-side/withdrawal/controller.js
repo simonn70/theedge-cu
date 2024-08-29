@@ -2,9 +2,6 @@ const axios = require("axios");
 const Withdrawal = require("./schema");
 const User = require("../users/schema");
 const { sendSMS } = require("../../utils/sendSMS");
-const paystack = require("paystack-api")(
-  "Bearer sk_test_3b0262988db07d1c10731c8e353e1ad5b99d29ed"
-); // Ensure to use your Paystack secret key
 
 const getWithdrawalPage = (req, res) => {
   res.send("This is the withdrawal page");
@@ -107,7 +104,7 @@ const createRecipientAndTransfer = async (req, res) => {
         bank_code: "MTN", // Set the mobile money provider's bank code, e.g., "MTN" for MTN Mobile Money
         // Use the mobile money number here
         currency: "GHS",
-        account_number: "0554674801",
+        account_number: user.mobileNumber,
       },
       {
         headers: {
@@ -120,15 +117,17 @@ const createRecipientAndTransfer = async (req, res) => {
     console.log(recipientResponse);
 
     const recipientCode = recipientResponse.data.data.recipient_code;
+    console.log(recipientCode);
+    
 
     // Step 2: Initiate the Transfer
     const transferResponse = await axios.post(
       "https://api.paystack.co/transfer",
       {
         source: "balance",
-        amount:amount*100,
+        amount:1000,
         recipient: recipientCode,
-        reason,
+        
       },
       {
         headers: {
@@ -137,23 +136,14 @@ const createRecipientAndTransfer = async (req, res) => {
         },
       }
     );
+    console.log(transferResponse);
+    
 
     const transferId = transferResponse.data.data.id;
 
     // Step 3: Verify the Transfer
-    const verifyTransferResponse = await axios.get(
-      `https://api.paystack.co/transfer/${transferId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    const transferStatus = verifyTransferResponse.data.data.status;
-
-    if (transferStatus === "success") {
+  
+    if (transferId) {
       //update the withdrawal to success
       // Send the combined response
       res.status(201).json({
@@ -161,7 +151,7 @@ const createRecipientAndTransfer = async (req, res) => {
         message: "Recipient created and transfer initiated successfully",
         recipient: recipientResponse.data.data,
         transfer: transferResponse.data.data,
-        verification: verifyTransferResponse.data.data,
+       
       });
     } else {
       // Handle cases where the transfer is not successful
@@ -171,13 +161,13 @@ const createRecipientAndTransfer = async (req, res) => {
           "Transfer failed or is pending. Please check the transfer status.",
         recipient: recipientResponse.data.data,
         transfer: transferResponse.data.data,
-        verification: verifyTransferResponse.data.data,
+        
       });
     }
   } catch (error) {
     res.status(400).json({
       status: "error",
-      message: error.response ? error.response.data.message : error.message,
+      message: error
     });
   }
 };

@@ -36,24 +36,29 @@ async function chargeWithPaystack(phone, accountNumber, amount, network) {
   const value = parseFloat(amount);
 
   try {
-    const response = await axios.post(
-      "https://api.paystack.co/charge",
-      {
-        amount: value*100,
-        email: `simonadjei70@gmail.com`,
-        currency: "GHS",
-        mobile_money: {
-          phone: phone,
-          provider: "mtn",
-        },
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+  const response = await axios.post(
+  "https://api.paystack.co/charge",
+  {
+    amount: value, // Amount in kobo or pesewas
+    email: "simonadjei70@gmail.com", // Customer's email
+    currency: "GHS", // Currency, e.g., "GHS" for Ghanaian Cedi
+    mobile_money: {
+      phone: phone, // Customer's phone number
+      provider: "mtn", // Mobile money provider, e.g., "mtn"
+    },
+    authorization: {
+      mode: "recurring", // Set the authorization mode to recurring
+      recurring_charge: true, // Indicate it's a recurring charge
+    }
+  },
+  {
+    headers: {
+      Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`, // Paystack secret key
+      "Content-Type": "application/json", // Content-Type header
+    },
+  }
+);
+
     console.log(response.data);
 
     return response.data.data;
