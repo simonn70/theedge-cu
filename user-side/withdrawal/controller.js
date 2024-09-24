@@ -84,6 +84,72 @@ const manualWithdrawal = async (req, res) => {
   }
 };
 
+const Withdrawals = async (req, res) => {
+  const { amount, accountNumber, purpose, account, withdrawalId } = req.body;
+
+  try {
+    // Find the withdrawal by ID
+    const withdrawal = await Withdrawal.findById(withdrawalId);
+
+    if (!withdrawal) {
+      return res.status(404).json({ message: "Withdrawal not found" });
+    }
+
+    // Check if the withdrawal has already been processed
+    if (withdrawal.status === "success") {
+      return res.status(400).json({ message: "Withdrawal already processed" });
+    }
+
+    // Find the user by account number
+    const user = await User.findOne({ accountNumber });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Ensure that the amount is treated as a number
+    const withdrawalAmount = parseFloat(amount);
+
+    // Update the user's balance based on the account type
+    if (account === "shares") {
+      if (user.sharesBalance < withdrawalAmount) {
+        return res.status(400).json({ message: "Insufficient balance in shares" });
+      }
+      user.sharesBalance -= withdrawalAmount;
+    } else if (account === "savings") {
+      if (user.savingsBalance < withdrawalAmount) {
+        return res.status(400).json({ message: "Insufficient balance in savings" });
+      }
+      user.savingsBalance -= withdrawalAmount;
+    } else {
+      return res.status(400).json({ message: "Invalid account type" });
+    }
+
+    // Save the updated user balance
+    await user.save();
+
+    // Update the withdrawal record to "success"
+    withdrawal.status = "success";
+   
+    await withdrawal.save();
+
+    // Send confirmation SMS
+    const mobileNumber = user.mobileNumber;
+    const url = "https://www.mycitticreditonline.com";
+    const message = `Hello ${user.email},\n\nYour account has been debited with GHS ${withdrawalAmount} by Citti Credit Union Bank. Click here to confirm: ${url}\nRegards,\nTeam`;
+    await sendSMS(mobileNumber, message);
+
+    res.status(200).json({
+      withdrawal,
+      message: "Withdrawal processed successfully",
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal server error." });
+  }
+};
+
+
 const createRecipientAndTransfer = async (req, res) => {
   const { accountNumber, bank_code, amount, type, currency, reason } = req.body;
   try {
@@ -125,7 +191,7 @@ const createRecipientAndTransfer = async (req, res) => {
       "https://api.paystack.co/transfer",
       {
         source: "balance",
-        amount:1000,
+        amount:1000*100,
         recipient: recipientCode,
         
       },
@@ -173,22 +239,23 @@ const createRecipientAndTransfer = async (req, res) => {
 };
 
 const rejectWithdrawal = async (req, res) => {
-  const { id } = req.body;
+  const { withdrawalId} = req.body;  // Destructure the 'id' from req.body
+  console.log(req);  // Make sure the ID is correctly logged
 
   try {
     // Find the withdrawal by ID and update its status to "rejected"
     const updatedWithdrawal = await Withdrawal.findByIdAndUpdate(
-      id,
+     withdrawalId,  // Use the destructured 'id'
       { status: "rejected" },
       { new: true }
     );
 
-    if (!updatedWithdrawal) {
-      return res.status(404).json({
-        status: "error",
-        message: "Withdrawal not found",
-      });
-    }
+    // if (!updatedWithdrawal) {
+    //   return res.status(404).json({
+    //     status: "error",
+    //     message: "Withdrawal not found",
+    //   });
+    // }
 
     res.status(200).json({
       status: "success",
@@ -202,12 +269,13 @@ const rejectWithdrawal = async (req, res) => {
     });
   }
 };
+
 module.exports = {
   getWithdrawalPage,
   makeWithdrawal,
   manualWithdrawal,
-  rejectWithdrawal,
-  createRecipientAndTransfer,
+  rejectWithdrawal,Withdrawals,
+  createRecipientAndTransfer
 };
 
 //withdraw and based on the account it should dedact from the balance of the account

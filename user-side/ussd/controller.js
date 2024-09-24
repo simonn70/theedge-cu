@@ -107,7 +107,7 @@ async function ussdHandler(req, res) {
   } else if (!sessionData[sessionID]?.accountNumber) {
     if (!userData || userData === "*928*443#") {
       message =
-        "Welcome to MyCittiCredit Union\nPlease enter your account number:";
+        "Welcome to Kan Credit Union\nPlease enter your account number:";
       continueSession = true;
     } else if (userData.length === 10 && !isNaN(userData)) {
       const accountNumber = userData;

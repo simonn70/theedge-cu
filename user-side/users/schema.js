@@ -18,6 +18,10 @@ const userSchema = new schema({
     type: String,
     required: [false, "your number is required"],
   },
+   verificationCode: {
+    type: String,
+    required: [false, "your code is required"],
+  },
   selectedBank: {
     type: String,
     required: [false, "please select your bank"],

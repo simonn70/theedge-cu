@@ -1,8 +1,11 @@
+
+
 const bcrypt = require("bcrypt");
 const { createToken, maxAge } = require("../../utils/authN");
 const User = require("./schema"); // Adjust the path to your schema file
 const Bank = require("../../admin/bank/schema");
 const { sendSMS } = require("../../utils/sendSMS.js");
+const { generateVerificationCode } = require("../../utils/verify.js");
 const Deposit = require("../deposit/schema");
 const getUserLogin = (req, res) => {
   res.send("Login get page");
@@ -123,7 +126,74 @@ const postUserSignUp = async (req, res) => {
   }
 };
 
-// reset details
+// reset password , first take mobile number and send otp and use that for verification with the new pass
+const sendPasswordResetEmail = async (request, response) => {
+    const { phone } = request.body;
+
+    try {
+       
+        const user = await User.findOne({mobileNumber: phone });
+
+        if (!user) {
+            return response.status(404).send({ msg: "User not found" });
+        }
+       const verificationCode = generateVerificationCode(6);
+
+       
+        user.verificationCode = verificationCode;
+        await user.save();
+
+    
+        const message =   `
+           Kindly verify using this code: ${verificationCode}\n If you did not request this, please ignore this message and your password will remain unchanged.\n`
+      await  sendSMS(message,phone)
+
+        return response.status(200).send({ msg: "Password reset sms sent" });
+
+    } catch (error) {
+        console.error("Error sending password reset sms:", error);
+        return response.status(500).send({ msg: "Failed to send password reset sms" });
+    }
+};
+
+
+
+ const resetPassword = async (request, response) => {
+    const { verificationCode, newPassword } = request.body;
+   
+
+    try {
+        // Ensure the database is connected
+       
+
+        // Find the user by email and ensure the token is valid and not expired
+        const user = await User.findOne({
+            verificationCode,
+            // Check that the token is not expired
+        });
+     
+    
+        if (!user) {
+            return response.status(400).send({ msg: "user not available" });
+        }
+
+        // Hash the new password
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        // Update the user's password and clear the reset token and expiry
+        user.password = hashedPassword;
+        user.verificationCode = undefined;
+        
+        await user.save();
+
+        return response.status(200).send({ msg: "Password has been reset successfully" });
+
+    } catch (error) {
+        console.error("Error resetting password:", error);
+        return response.status(500).send({ msg: "Failed to reset password" });
+    }
+};
+
 
 // Controller function to reset password and set the name field
 const resetPasswordAndSetName = async (req, res) => {
@@ -173,4 +243,5 @@ module.exports = {
   getUserSignUp,
   postUserSignUp,
   resetPasswordAndSetName,
+  resetPassword,sendPasswordResetEmail
 };
