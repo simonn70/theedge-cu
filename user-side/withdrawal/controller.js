@@ -48,15 +48,30 @@ const manualWithdrawal = async (req, res) => {
     const withdrawalAmount = parseFloat(amount);
 
     // Update the user's balance based on the account type
-    if (account === "shares") {
-      user.sharesBalance -= withdrawalAmount;
-    } else if (account === "savings") {
-      user.savingsBalance -= withdrawalAmount;
-    } else {
-      return res.status(400).json({ message: "Invalid account type" });
+    switch (account) {
+      case "shares":
+        user.sharesBalance -= withdrawalAmount;
+        break;
+      case "savings":
+        user.savingsBalance -= withdrawalAmount;
+        break;
+      case "tsme":
+        user.tsmeBalance -= withdrawalAmount;
+        break;
+      case "tlife":
+        user.tlifeBalance -= withdrawalAmount;
+        break;
+      case "tkids":
+        user.tkidsBalance -= withdrawalAmount;
+        break;
+      case "tedu":
+        user.teduBalance -= withdrawalAmount;
+        break;
+      default:
+        return res.status(400).json({ message: "Invalid account type" });
     }
 
-    // Save the updated user
+    // Save the updated user balance
     await user.save();
 
     // Create a new withdrawal record
@@ -65,15 +80,16 @@ const manualWithdrawal = async (req, res) => {
       amount: withdrawalAmount, // Ensure the correct amount is stored
       purpose,
       accountNumber,
-     
       status: "success",
     });
+
+    // Send confirmation SMS
     const mobileNumber = user.mobileNumber;
     const url = "https://www.mycitticreditonline.com";
-    // Generate the verification message
-    const message = `Hello ${user.email},\n\nYour account has been debited with GHS  ${withdrawalAmount}   by Citti Credit Union Bank. click here to confirm ${url}\nRegards,\nTeam`;
+    const message = `Hello ${user.email},\n\nYour account has been debited with GHS ${withdrawalAmount} by Citti Credit Union Bank. Click here to confirm: ${url}\nRegards,\nTeam`;
     await sendSMS(mobileNumber, message);
 
+    // Respond with success message and withdrawal details
     res.status(200).json({
       newWithdrawal,
       message: "Withdrawal processed successfully",
@@ -83,6 +99,7 @@ const manualWithdrawal = async (req, res) => {
     res.status(500).json({ message: "Internal server error." });
   }
 };
+
 
 const Withdrawals = async (req, res) => {
   const { amount, accountNumber, purpose, account, withdrawalId } = req.body;
@@ -135,7 +152,7 @@ const Withdrawals = async (req, res) => {
 
     // Send confirmation SMS
     const mobileNumber = user.mobileNumber;
-    const url = "https://www.mycitticreditonline.com";
+    const url = "https://theedgecreditunion.online/";
     const message = `Hello ${user.email},\n\nYour account has been debited with GHS ${withdrawalAmount} by Citti Credit Union Bank. Click here to confirm: ${url}\nRegards,\nTeam`;
     await sendSMS(mobileNumber, message);
 

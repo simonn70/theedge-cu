@@ -74,6 +74,7 @@ const postUserSignUp = async (req, res) => {
   } = req.body;
 
   try {
+    // Check if the user already exists
     const existingUser = await User.findOne({
       $or: [{ email }, { accountNumber }],
     });
@@ -81,8 +82,11 @@ const postUserSignUp = async (req, res) => {
       return res.status(400).json({ message: "This user already exists." });
     }
 
+    // Hash the password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create the new user
     const newUser = await User.create({
       name,
       email,
@@ -92,25 +96,29 @@ const postUserSignUp = async (req, res) => {
       mobileNumber,
       savingsBalance,
       sharesBalance,
-      tsmeBalance,tlifeBalance,teduBalance,
+      tsmeBalance,
+      tlifeBalance,
+      teduBalance,
+      tkidsBalance,
       userType: "newMember",
     });
 
-    const url = "https://theedgecreditunion.online/sign-in";
-    const message = `Hello ${email},\n\nYour account with account number: ${accountNumber} has been created by The Edge Credit Union Bank. Your credentials are as follows:\n\nEmail: ${email}\nPassword: ${password}\n\nPlease change your password after your first login.\nclick here ${url}\nRegards,\nTeam`;
+    // Generate message for SMS notification
+    const url = "https://theedgecreditunion.online/";
+    const message = `Hello ${email},\n\nYour account with account number: ${accountNumber} has been created by The Edge Credit Union . Your credentials are as follows:\n\nEmail: ${email}\nPassword: ${password}\n\nPlease change your password after your first login.\nClick here ${url}\nRegards,\nTeam`;
 
     if (newUser) {
-      // Send SMS notification
+      // Send SMS notification to the user
       await sendSMS(mobileNumber, message);
 
-      // Create deposit records for any non-zero balances
+      // Create deposit records for non-zero balances
       const balanceEntries = [
         { balance: savingsBalance, account: 'savings' },
         { balance: sharesBalance, account: 'shares' },
         { balance: tsmeBalance, account: 'tsme' },
         { balance: tlifeBalance, account: 'tlife' },
         { balance: tkidsBalance, account: 'tkids' },
-        
+        { balance: teduBalance, account: 'tedu' }, // Include teduBalance
       ];
 
       // Iterate through balance entries and create deposits where applicable
@@ -122,8 +130,14 @@ const postUserSignUp = async (req, res) => {
             amount: balance,
             account,
           });
+
+          // Update the respective user balance field after the deposit
+          newUser[`${account}Balance`] += balance;
         }
       }
+
+      // Save the updated user balances
+      await newUser.save();
 
       return res.status(201).json(newUser);
     }
@@ -132,6 +146,7 @@ const postUserSignUp = async (req, res) => {
     return res.status(500).json({ message: "Internal server error." });
   }
 };
+
 
 
 // reset password , first take mobile number and send otp and use that for verification with the new pass

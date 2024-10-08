@@ -184,6 +184,7 @@ const getCustomerReports = async (req, res) => {
     // Fetch all withdrawals and deposits (considering all statuses)
     const allWithdrawals = await withdrawal.find({ accountNumber });
     const allDeposits = await deposit.find({ accountNumber });
+    const user = await user.find({ accountNumber });
 
     // Fetch only successful withdrawals and deposits for total calculations
     const successfulWithdrawals = await withdrawal.find({
@@ -254,6 +255,7 @@ const getCustomerReports = async (req, res) => {
       totals,
       allTransactions: sortedTransactions, // Return sorted transactions
       groupedTransactions: sortedSuccessfulTransactions,
+      user
     });
   } catch (err) {
     console.error("Error fetching reports:", err);

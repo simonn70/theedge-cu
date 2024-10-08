@@ -40,6 +40,26 @@ const userSchema = new schema({
     default: 0, // Set default value of 0 for balance
     required: [false, "please enter your balance"],
   },
+  tkidsBalance: {
+    type: Number,
+    default: 0, // Set default value of 0 for balance
+    required: [false, "please enter your balance"],
+  },
+ tlifeBalance: {
+    type: Number,
+    default: 0, // Set default value of 0 for balance
+    required: [false, "please enter your balance"],
+  },
+ savingsBalance: {
+    type: Number,
+    default: 0, // Set default value of 0 for balance
+    required: [false, "please enter your balance"],
+  },
+  tsmeBalance: {
+    type: Number,
+    default: 0, // Set default value of 0 for balance
+    required: [false, "please enter your balance"],
+  },
   banks: {
     type: [schema.Types.ObjectId],
     ref: "Bank",

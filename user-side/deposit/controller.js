@@ -13,20 +13,19 @@ const PAYSTACK_SECRET_KEY = "sk_live_b656166f9c8b4216425d78a0ef4c49a390d84cbd";
 const makeDeposit = async (req, res) => {
   const { userid, email, amount, account, accountNumber } = req.body;
 
-  //query for the user details
-
+  // Query for the user details
   try {
     const user = await User.findOne({ accountNumber });
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
+
     const params = {
       email: email,
-      amount: amount * 100,
-      // callback_url: `${BASE_URL}/succes-page`, // Replace with your actual callback URL
-      // Paystack expects amount in kobo
+      amount: amount * 100, // Paystack expects amount in kobo
     };
+
     const depositAmount = parseFloat(amount);
     const options = {
       method: "POST",
@@ -40,7 +39,8 @@ const makeDeposit = async (req, res) => {
     };
 
     const response = await axios(options);
-    // tag pending
+
+    // Create new deposit record with pending status
     const newDeposit = await deposit.create({
       email,
       userid,
@@ -50,13 +50,22 @@ const makeDeposit = async (req, res) => {
       reference: response.data.data.reference,
     });
 
+    // Update user balance based on account type
     if (account === "shares") {
       user.sharesBalance += depositAmount;
     } else if (account === "savings") {
       user.savingsBalance += depositAmount;
+    } else if (account === "tlife") {
+      user.tlifeBalance += depositAmount;
+    } else if (account === "tedu") {
+      user.teduBalance += depositAmount;
+    } else if (account === "tsme") {
+      user.tsmeBalance += depositAmount;
     } else {
       return res.status(400).json({ message: "Invalid account type" });
     }
+
+    await user.save(); // Save the updated user balance
 
     res.json({
       status: "success",
@@ -88,19 +97,34 @@ const manualDeposit = async (req, res) => {
     const depositAmount = parseFloat(amount);
 
     // Update the user's balance based on the account type
-    if (account === "shares") {
-      user.sharesBalance += depositAmount;
-    } else if (account === "savings") {
-      user.savingsBalance += depositAmount;
-    } else {
-      return res.status(400).json({ message: "Invalid account type" });
+    switch (account) {
+      case "shares":
+        user.sharesBalance += depositAmount;
+        break;
+      case "savings":
+        user.savingsBalance += depositAmount;
+        break;
+      case "tsme":
+        user.tsmeBalance += depositAmount;
+        break;
+      case "tlife":
+        user.tlifeBalance += depositAmount;
+        break;
+      case "tkids":
+        user.tkidsBalance += depositAmount;
+        break;
+      case "tedu":
+        user.teduBalance += depositAmount;
+        break;
+      default:
+        return res.status(400).json({ message: "Invalid account type" });
     }
 
-    // Save the updated user
+    // Save the updated user balance
     await user.save();
 
     // Create a new deposit record
-    const newDeposit = await deposit.create({
+    const newDeposit = await Deposit.create({
       email: user.email,
       userid,
       amount: depositAmount, // Ensure the correct amount is stored
@@ -108,12 +132,13 @@ const manualDeposit = async (req, res) => {
       accountNumber,
     });
 
+    // Send confirmation SMS
     const mobileNumber = user.mobileNumber;
     const url = "https://kan-credit.vercel.app/sign-in";
-    // Generate the verification message
-    const message = `Hello ${email},\n\nYour account has been credited with GHS  ${amount}   by Kan Credit Union Bank. click here to confirm ${url}\nRegards,\nTeam`;
+    const message = `Hello ${email},\n\nYour account has been credited with GHS ${amount} by Kan Credit Union Bank. Click here to confirm: ${url}\nRegards,\nTeam`;
     await sendSMS(mobileNumber, message);
 
+    // Respond with success message and deposit details
     res.json({
       status: "success",
       message: "Deposit processed successfully",
@@ -127,6 +152,7 @@ const manualDeposit = async (req, res) => {
     });
   }
 };
+
 
 const verifyPayment = async (req, res) => {
   const { reference } = req.query;
