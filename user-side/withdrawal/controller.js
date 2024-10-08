@@ -138,6 +138,21 @@ const Withdrawals = async (req, res) => {
         return res.status(400).json({ message: "Insufficient balance in savings" });
       }
       user.savingsBalance -= withdrawalAmount;
+    } else if (account === "tlife") {
+      if (user.tlifeBalance < withdrawalAmount) {
+        return res.status(400).json({ message: "Insufficient balance in tlife" });
+      }
+      user.tlifeBalance -= withdrawalAmount;
+    } else if (account === "tedu") {
+      if (user.teduBalance < withdrawalAmount) {
+        return res.status(400).json({ message: "Insufficient balance in tedu" });
+      }
+      user.teduBalance -= withdrawalAmount;
+    } else if (account === "tsme") {
+      if (user.tsmeBalance < withdrawalAmount) {
+        return res.status(400).json({ message: "Insufficient balance in tsme" });
+      }
+      user.tsmeBalance -= withdrawalAmount;
     } else {
       return res.status(400).json({ message: "Invalid account type" });
     }
@@ -147,7 +162,6 @@ const Withdrawals = async (req, res) => {
 
     // Update the withdrawal record to "success"
     withdrawal.status = "success";
-   
     await withdrawal.save();
 
     // Send confirmation SMS
@@ -165,6 +179,7 @@ const Withdrawals = async (req, res) => {
     res.status(500).json({ message: "Internal server error." });
   }
 };
+
 
 
 const createRecipientAndTransfer = async (req, res) => {
