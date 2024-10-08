@@ -50,7 +50,7 @@ const userSchema = new schema({
     default: 0, // Set default value of 0 for balance
     required: [false, "please enter your balance"],
   },
- savingsBalance: {
+ teduBalance: {
     type: Number,
     default: 0, // Set default value of 0 for balance
     required: [false, "please enter your balance"],
