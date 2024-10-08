@@ -124,7 +124,7 @@ const manualDeposit = async (req, res) => {
     await user.save();
 
     // Create a new deposit record
-    const newDeposit = await Deposit.create({
+    const newDeposit = await deposit.create({
       email: user.email,
       userid,
       amount: depositAmount, // Ensure the correct amount is stored

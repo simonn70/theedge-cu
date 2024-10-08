@@ -47,24 +47,42 @@ const manualWithdrawal = async (req, res) => {
     // Ensure that the amount is treated as a number
     const withdrawalAmount = parseFloat(amount);
 
-    // Update the user's balance based on the account type
+    // Check if the balance is sufficient for the specified account type
     switch (account) {
       case "shares":
+        if (user.sharesBalance < withdrawalAmount) {
+          return res.status(400).json({ message: "Insufficient balance in shares" });
+        }
         user.sharesBalance -= withdrawalAmount;
         break;
       case "savings":
+        if (user.savingsBalance < withdrawalAmount) {
+          return res.status(400).json({ message: "Insufficient balance in savings" });
+        }
         user.savingsBalance -= withdrawalAmount;
         break;
       case "tsme":
+        if (user.tsmeBalance < withdrawalAmount) {
+          return res.status(400).json({ message: "Insufficient balance in tsme" });
+        }
         user.tsmeBalance -= withdrawalAmount;
         break;
       case "tlife":
+        if (user.tlifeBalance < withdrawalAmount) {
+          return res.status(400).json({ message: "Insufficient balance in tlife" });
+        }
         user.tlifeBalance -= withdrawalAmount;
         break;
       case "tkids":
+        if (user.tkidsBalance < withdrawalAmount) {
+          return res.status(400).json({ message: "Insufficient balance in tkids" });
+        }
         user.tkidsBalance -= withdrawalAmount;
         break;
       case "tedu":
+        if (user.teduBalance < withdrawalAmount) {
+          return res.status(400).json({ message: "Insufficient balance in tedu" });
+        }
         user.teduBalance -= withdrawalAmount;
         break;
       default:
@@ -99,6 +117,7 @@ const manualWithdrawal = async (req, res) => {
     res.status(500).json({ message: "Internal server error." });
   }
 };
+
 
 
 const Withdrawals = async (req, res) => {
