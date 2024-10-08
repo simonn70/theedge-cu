@@ -92,7 +92,7 @@ const postUserSignUp = async (req, res) => {
 
     const url = "https://kan-credit.vercel.app/sign-in";
     // Generate the verification message
-    const message = `Hello ${email},\n\nYour account with account number: ${accountNumber} has been created by Kan Credit Union Bank. Your credentials are as follows:\n\nEmail: ${email}\nPassword: ${password}\n\nPlease change your password after your first login.\nclick here ${url}\nRegards,\nTeam`;
+    const message = `Hello ${email},\n\nYour account with account number: ${accountNumber} has been created by The Edge Credit Union Bank. Your credentials are as follows:\n\nEmail: ${email}\nPassword: ${password}\n\nPlease change your password after your first login.\nclick here ${url}\nRegards,\nTeam`;
 
     if (newUser) {
       // Send SMS notification

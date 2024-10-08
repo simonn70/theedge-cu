@@ -4,7 +4,7 @@ const sendSMS = async (contactNumber, message) => {
   // const apiKey = "nHBzjRiacu090IFfVpZdugx1g";
   // const senderId = "Kan Credit";
    const apiKey = "bIOb9eHhApWR3mw4PzPU6k8a1";
-  const senderId = "The Edge CU";
+  const senderId = "The Edge CU";
 
   const mNotifyUrl = `https://apps.mnotify.net/smsapi?key=${apiKey}&to=${contactNumber}&msg=${encodeURIComponent(
     message
