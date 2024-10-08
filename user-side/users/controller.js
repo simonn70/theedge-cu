@@ -66,6 +66,11 @@ const postUserSignUp = async (req, res) => {
     accountNumber,
     savingsBalance,
     sharesBalance,
+    teduBalance,      // T-Edu Savings Balance
+    tsmeBalance,      // T-SME Savings Balance
+    tlifeBalance,     // T-Lifestyle Savings Balance
+    tkidsBalance,     // T-Kids Savings Balance
+    edgeSharesBalance // Edge Shares Balance
   } = req.body;
 
   try {
@@ -87,35 +92,37 @@ const postUserSignUp = async (req, res) => {
       mobileNumber,
       savingsBalance,
       sharesBalance,
+      tsmeBalance,tlifeBalance,teduBalance,
       userType: "newMember",
     });
 
-    const url = "https://kan-credit.vercel.app/sign-in";
-    // Generate the verification message
+    const url = "https://theedgecreditunion.online/sign-in";
     const message = `Hello ${email},\n\nYour account with account number: ${accountNumber} has been created by The Edge Credit Union Bank. Your credentials are as follows:\n\nEmail: ${email}\nPassword: ${password}\n\nPlease change your password after your first login.\nclick here ${url}\nRegards,\nTeam`;
 
     if (newUser) {
       // Send SMS notification
       await sendSMS(mobileNumber, message);
 
-      // Create a deposit record if savingsBalance is provided
-      if (savingsBalance) {
-        await Deposit.create({
-          email,
-          accountNumber,
-          amount: savingsBalance,
-          account: "savings",
-        });
-      }
+      // Create deposit records for any non-zero balances
+      const balanceEntries = [
+        { balance: savingsBalance, account: 'savings' },
+        { balance: sharesBalance, account: 'shares' },
+        { balance: tsmeBalance, account: 'tsme' },
+        { balance: tlifeBalance, account: 'tlife' },
+        { balance: tkidsBalance, account: 'tkids' },
+        
+      ];
 
-      // Create a deposit record if sharesBalance is provided
-      if (sharesBalance) {
-        await Deposit.create({
-          email,
-          accountNumber,
-          amount: sharesBalance,
-          account: "shares",
-        });
+      // Iterate through balance entries and create deposits where applicable
+      for (const { balance, account } of balanceEntries) {
+        if (balance && balance > 0) {
+          await Deposit.create({
+            email,
+            accountNumber,
+            amount: balance,
+            account,
+          });
+        }
       }
 
       return res.status(201).json(newUser);
@@ -125,6 +132,7 @@ const postUserSignUp = async (req, res) => {
     return res.status(500).json({ message: "Internal server error." });
   }
 };
+
 
 // reset password , first take mobile number and send otp and use that for verification with the new pass
 const sendPasswordResetEmail = async (request, response) => {
