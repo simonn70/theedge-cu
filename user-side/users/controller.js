@@ -137,7 +137,9 @@ const sendPasswordResetEmail = async (request, response) => {
         if (!user) {
             return response.status(404).send({ msg: "User not found" });
         }
-       const verificationCode = generateVerificationCode(6);
+      const verificationCode = generateVerificationCode(6);
+      console.log(verificationCode,'this is new');
+      
 
        
         user.verificationCode = verificationCode;
