@@ -134,8 +134,8 @@ const manualDeposit = async (req, res) => {
 
     // Send confirmation SMS
     const mobileNumber = user.mobileNumber;
-    const url = "https://kan-credit.vercel.app/sign-in";
-    const message = `Hello ${email},\n\nYour account has been credited with GHS ${amount} by Kan Credit Union Bank. Click here to confirm: ${url}\nRegards,\nTeam`;
+    const url = "https://www.gntdacreditunion.com";
+    const message = `Hello ${email},\n\nYour account has been credited with GHS ${amount} by Kan GNTDA Union Bank. Click here to confirm: ${url}\nRegards,\nTeam`;
     await sendSMS(mobileNumber, message);
 
     // Respond with success message and deposit details

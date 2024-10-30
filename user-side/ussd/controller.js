@@ -107,7 +107,7 @@ async function ussdHandler(req, res) {
   } else if (!sessionData[sessionID]?.accountNumber) {
     if (!userData || userData === "*928*443#") {
       message =
-        "Welcome to Kan Credit Union\nPlease enter your account number:";
+        "Welcome to GNTDA Credit Union\nPlease enter your account number:";
       continueSession = true;
     } else if (userData.length === 10 && !isNaN(userData)) {
       const accountNumber = userData;
@@ -133,7 +133,7 @@ async function ussdHandler(req, res) {
     if (!session.selectedAction && (userInput === "3" || userInput === "4")) {
       if (userInput === "3") {
         message =
-          "Which account balance do you want to check?\n1. Citti Shares\n2. Citti Savings";
+          "Which account balance do you want to check?\n1. GNTDA Shares\n2. GNTDA Savings";
         session.selectedAction = "checkBalance";
         continueSession = true;
       } else if (userInput === "4") {
@@ -145,7 +145,7 @@ async function ussdHandler(req, res) {
       (userInput === "1" || userInput === "2")
     ) {
       session.selectedAccount =
-        userInput === "1" ? "Kan Shares" : "Kan Savings";
+        userInput === "1" ? "GNTDA Shares" : "GNTDA Savings";
       const accountType = ACCOUNT_TYPE_MAP[session.selectedAccount];
       try {
         const balance = await checkBalance(
@@ -165,14 +165,14 @@ async function ussdHandler(req, res) {
       session.selectedAction = userInput;
       message = `Which account do you want to ${
         userInput === "1" ? "deposit into" : "withdraw from"
-      }?\n1. Kan Savings\n2. Kan Shares`;
+      }?\n1. GNTDA Savings\n2. GNTDA Shares`;
       continueSession = true;
     } else if (
       !session.selectedAccount &&
       (userInput === "1" || userInput === "2")
     ) {
       session.selectedAccount =
-        userInput === "1" ? "Kan Savings" : "Kan Shares";
+        userInput === "1" ? "GNTDA Savings" : "GNTDA Shares";
       message = `Enter Amount for ${
         session.selectedAction === "1" ? "Deposit" : "Withdrawal"
       }:`;

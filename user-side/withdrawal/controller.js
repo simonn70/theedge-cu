@@ -103,8 +103,8 @@ const manualWithdrawal = async (req, res) => {
 
     // Send confirmation SMS
     const mobileNumber = user.mobileNumber;
-    const url = "https://www.mycitticreditonline.com";
-    const message = `Hello ${user.email},\n\nYour account has been debited with GHS ${withdrawalAmount} by Citti Credit Union Bank. Click here to confirm: ${url}\nRegards,\nTeam`;
+    const url = "https://www.gntdacreditunion.com";
+    const message = `Hello ${user.email},\n\nYour account has been debited with GHS ${withdrawalAmount} by GNTDA Credit Union Bank. Click here to confirm: ${url}\nRegards,\nTeam`;
     await sendSMS(mobileNumber, message);
 
     // Respond with success message and withdrawal details
@@ -185,8 +185,8 @@ const Withdrawals = async (req, res) => {
 
     // Send confirmation SMS
     const mobileNumber = user.mobileNumber;
-    const url = "https://theedgecreditunion.online/";
-    const message = `Hello ${user.email},\n\nYour account has been debited with GHS ${withdrawalAmount} by Citti Credit Union Bank. Click here to confirm: ${url}\nRegards,\nTeam`;
+    const url = "https://www.gntdacreditunion.com";
+    const message = `Hello ${user.email},\n\nYour account has been debited with GHS ${withdrawalAmount} by GNTDA Credit Union Bank. Click here to confirm: ${url}\nRegards,\nTeam`;
     await sendSMS(mobileNumber, message);
 
     res.status(200).json({

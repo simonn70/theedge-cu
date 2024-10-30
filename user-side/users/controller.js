@@ -104,8 +104,8 @@ const postUserSignUp = async (req, res) => {
     });
 
     // Generate message for SMS notification
-    const url = "https://theedgecreditunion.online/";
-    const message = `Hello ${email},\n\nYour account with account number: ${accountNumber} has been created by The Edge Credit Union . Your credentials are as follows:\n\nEmail: ${email}\nPassword: ${password}\n\nPlease change your password after your first login.\nClick here ${url}\nRegards,\nTeam`;
+    const url = "https://www.gntdacreditunion.com";
+    const message = `Hello ${email},\n\nYour account with account number: ${accountNumber} has been created by The GNTDA Credit Union . Your credentials are as follows:\n\nEmail: ${email}\nPassword: ${password}\n\nPlease change your password after your first login.\nClick here ${url}\nRegards,\nTeam`;
 
     if (newUser) {
       // Send SMS notification to the user
@@ -130,9 +130,9 @@ const postUserSignUp = async (req, res) => {
             amount: balance,
             account,
           });
-
+const amount = parseFloat(balance);
           // Update the respective user balance field after the deposit
-          newUser[`${account}Balance`] += balance;
+          newUser[`${account}Balance`] += amount;
         }
       }
 
@@ -146,6 +146,56 @@ const postUserSignUp = async (req, res) => {
     return res.status(500).json({ message: "Internal server error." });
   }
 };
+
+
+const addNewStaff = async (req, res) => {
+  const {
+    firstname,
+    lastname,
+    middlename,
+    dateofBirth,
+    sex,
+    email,
+    password,
+    phonenumber,
+    position,
+  } = req.body;
+
+  // Basic validation
+  // if (!firstname || !lastname || !dateofBirth || !email || !password || !phonenumber) {
+  //   return res.status(400).json({ message: "All required fields must be provided" });
+  // }
+
+  try {
+    // Create a new staff member document
+    const newStaffMember = new User({
+      name:firstname,
+      
+      dateofBirth,
+      sex,
+      email,
+      password, // You should encrypt the password before saving
+     mobileNumber: phonenumber,
+      position,
+      userType:"newStaff"
+    });
+
+     const url = "https://www.gntdacreditunion.com/";
+    const message = `Hello ${email},\n\nYour account  has been created by The GNTDA Credit Union as a staff member . Your credentials are as follows:\n\nEmail: ${email}\nPassword: ${password}\n\nPlease change your password after your first login.\nClick here ${url}\nRegards,\nTeam`;
+
+    if (newStaffMember) {
+      // Send SMS notification to the user
+      await sendSMS(phonenumber, message);
+    }
+
+    // Save staff member to the database
+    const savedStaffMember = await newStaffMember.save();
+    res.status(201).json(savedStaffMember);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to add staff member", error });
+  }
+};
+
 
 
 
@@ -262,11 +312,36 @@ const resetPasswordAndSetName = async (req, res) => {
   }
 };
 
+
+// Fetch users based on the position field
+const getUsersByPosition = async (req, res) => {
+  try {
+  
+
+    // Fetch users from the database where the position matches the given query
+    const users = await User.find({ userType: "staff" })
+
+    // Check if users exist
+    if (users.length === 0) {
+      return res.status(404).json({ message: "No users found with this position" })
+    }
+
+    res.status(200).json(users)
+  } catch (error) {
+    res.status(500).json({ error: "An error occurred while fetching users", details: error.message })
+  }
+}
+
+
+
+
+
+
 module.exports = {
   getUserLogin,
   postUserLogin,
   getUserSignUp,
   postUserSignUp,
   resetPasswordAndSetName,
-  resetPassword,sendPasswordResetEmail
+  resetPassword,sendPasswordResetEmail,getUsersByPosition,addNewStaff
 };
