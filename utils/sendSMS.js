@@ -15,6 +15,9 @@ const sendSMS = async (contactNumber, message) => {
 
   try {
     const response = await axios.post(mNotifyUrl);
+
+    console.log(response, 'new dats');
+    
     if (response.data.status === "1000") {
       console.log("SMS sent successfully");
     } else {

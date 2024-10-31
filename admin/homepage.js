@@ -14,7 +14,7 @@ const {
 router.get("/homepage", getHomepage);
 router.get("/members", getMembers);
 router.post("/members", newMember);
-router.put("/member/:id", updateMember);
+router.post("/member/update", updateMember);
 router.post("/bulkmembers", insertMembers);
 router.get("/pendingwithdrawals", getPendingWithdrawals);
 router.post("/approvewithdrawal", updateWithdrawal);

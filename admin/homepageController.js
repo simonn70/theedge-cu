@@ -108,18 +108,19 @@ const insertMembers = async (req, res) => {
 };
 
 const updateMember = async (req, res) => {
-  const { id, email } = req.body;
+  const { id,name, email } = req.body;
   try {
-    const existingUser = await user.findOne({ id });
+    const existingUser = await user.findById(id );
     if (!existingUser) {
       res.status(404).send("no such user exists. check your credentials");
     } else {
       existingUser.email = email || existingUser.email;
-      if (req.body.password) {
-        const salt = await bcrypt.genSalt(10);
-        const newPassword = await bcrypt.hash(req.body.password, salt);
-        existingUser.password = newPassword || existingUser.password;
-      }
+        // const salt = await bcrypt.genSalt(10);
+        // const newPassword = await bcrypt.hash(req.body.password, salt);
+      existingUser.name = name || existingUser.name
+      
+      await existingUser.save();
+      
       res.send(existingUser);
     }
   } catch (err) {
