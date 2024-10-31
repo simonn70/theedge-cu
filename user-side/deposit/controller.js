@@ -36,8 +36,11 @@ const makeDeposit = async (req, res) => {
         Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
         "Content-Type": "application/json",
       },
-      data: params,
-      channels: ["card", "mobile_money"],
+       data: {
+    ...params,
+    redirect_url: "https://www.gntdacreditunion.com/dashboard", // Replace with your desired redirect URL
+  },
+      channels:["card", "mobile_money"],
     };
 
     const response = await axios(options);
