@@ -8,7 +8,7 @@ const getDepositPage = (req, res) => {
   res.send("This is the deposit page");
 };
 const BASE_URL = "http://localhost:3000";
-// const PAYSTACK_SECRET_KEY = "sk_live_b656166f9c8b4216425d78a0ef4c49a390d84cbd"; KAN
+// const PAYSTACK_SECRET_KEY = "sk_live_b656166f9c8b4216425d78a0ef4c49a390d84cbd"; THE EDGE
 //GNTDA
 const PAYSTACK_SECRET_KEY = "sk_live_a743c2a86245b1a0de3286a11f5cc4b87727b705";
 
