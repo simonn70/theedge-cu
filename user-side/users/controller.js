@@ -104,8 +104,8 @@ const postUserSignUp = async (req, res) => {
     });
 
     // Generate message for SMS notification
-    const url = "https://www.gntdacreditunion.com";
-    const message = `Hello ${email},\n\nYour account with account number: ${accountNumber} has been created by The GNTDA Credit Union . Your credentials are as follows:\n\nEmail: ${email}\nPassword: ${password}\n\nPlease change your password after your first login.\nClick here ${url}\nRegards,\nTeam`;
+    const url = "https://theedgecreditunion.online/";
+    const message = `Hello ${email},\n\nYour account with account number: ${accountNumber} has been created by The Edge  Credit Union . Your credentials are as follows:\n\nEmail: ${email}\nPassword: ${password}\n\nPlease change your password after your first login.\nClick here ${url}\nRegards,\nTeam`;
 
     if (newUser) {
       // Send SMS notification to the user
