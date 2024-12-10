@@ -132,7 +132,7 @@ const postUserSignUp = async (req, res) => {
           });
 const amount = parseFloat(balance);
           // Update the respective user balance field after the deposit
-          newUser[`${account}Balance`] += amount;
+          // newUser[`${account}Balance`] += amount;
         }
       }
 
