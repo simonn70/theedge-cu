@@ -16,7 +16,7 @@ const postUserLogin = async (req, res) => {
   try {
     // Try to find the user or bank by email
     const existingUser = await User.findOne(
-      { email } || { mobileNumber: email }
+      { email } 
     );
     const existingBank = await Bank.findOne({ email });
 
