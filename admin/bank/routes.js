@@ -7,6 +7,6 @@ const {
 } = require("./controller");
 
 router.get("/", getBankLoginPage);
-router.post("/", postBankSignupPage);
+router.post("/signup", postBankSignupPage);
 
 module.exports = router;
